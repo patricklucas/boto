@@ -52,10 +52,21 @@ class Layer2(object):
 
     def list_vaults(self):
         """
-        Return a list of all vaults associated with the account ID.
+        Get a generator to iterate over all vaults associated with the account
+        ID.
 
-        :rtype: List of :class:`boto.glacier.vault.Vault`
-        :return: A list of Vault objects.
+        :rtype: generator
+        :return: Generator containing :class:`boto.glacier.vault.Vault`
         """
-        response_data = self.layer1.list_vaults()
-        return [Vault(self.layer1, rd) for rd in response_data['VaultList']]
+        marker = None
+
+        while True:
+            response_data = self.layer1.list_vaults(marker=marker)
+
+            for rd in response_data['VaultList']:
+                yield Vault(self.layer1, rd)
+
+            marker = response_data['Marker']
+
+            if not marker:
+                break
